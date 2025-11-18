@@ -1,0 +1,70 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parâmetros
+R = 0.085        
+L = 11e-6        
+C = 180e-6       
+Vx = 900         
+# Condições iniciais
+i = 0.0
+vC = Vx
+
+# Tempo
+t0 = 0.0
+t_max = 200e-6   # 200 µs 
+dt = 0.02e-6     # 20 ns 
+N = int(np.ceil(t_max / dt)) + 1
+
+# Vetores
+t = np.zeros(N)
+i_L = np.zeros(N)      
+v_C = np.zeros(N)      
+
+# inicializa índice 0 corretamente
+t[0] = t0
+i_L[0] = i           
+v_C[0] = vC           
+
+# Integração (Euler explícito)
+for k in range(N-1):
+    # estado do diodo
+    if vC > 0:
+        di_dt = vC / L
+        dv_dt = - i / C
+    else:
+        di_dt = (vC - R * i) / L
+        dv_dt = - (i + vC / R) / C
+
+    # passo
+    i = i + di_dt * dt
+    vC = vC + dv_dt * dt
+
+    t[k+1] = t[k] + dt
+    i_L[k+1] = i       
+    v_C[k+1] = vC     
+
+# resultados
+idx_i_peak = np.argmax(i_L)   
+idx_v_min = np.argmin(v_C)    
+print(f"i_peak = {i_L[idx_i_peak]:.2f} A at {t[idx_i_peak]*1e6:.2f} µs")  
+print(f"v_min  = {v_C[idx_v_min]:.2f} V at {t[idx_v_min]*1e6:.2f} µs")    
+
+# plots
+plt.figure(figsize=(10,6))
+plt.subplot(2,1,1)
+plt.plot(t*1e6, i_L, 'b')      
+plt.axvline(t[idx_i_peak]*1e6, color='r', linestyle='--')
+plt.title('Corrente no Indutor i(t)')
+plt.ylabel('i (A)')
+plt.grid(True)
+
+plt.subplot(2,1,2)
+plt.plot(t*1e6, v_C, 'r')     
+plt.axvline(t[idx_v_min]*1e6, color='r', linestyle='--')
+plt.title('Tensão no Capacitor Vc(t)')
+plt.xlabel('Tempo (µs)')
+plt.ylabel('Vc (V)')
+plt.grid(True)
+plt.tight_layout()
+plt.show()
